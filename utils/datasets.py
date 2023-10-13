@@ -668,7 +668,28 @@ def load_image(self, index):
     img = self.imgs[index]
     if img is None:  # not cached
         path = self.img_files[index]
-        img = cv2.imread(path)  # BGR
+
+        # Use channels as temporal association loading the greyscale from
+        # earlier images as G and R channel
+        # If no earlier images exist the missing channels are
+        # filled with copies of the original selected image
+        b = cv2.imread(path, cv2.IMREAD_GRAYSCALE)  # BGR
+        g = cv2.imread(self.img_files[index - 1], cv2.IMREAD_GRAYSCALE) if index >= 1 else b
+        r = cv2.imread(self.img_files[index - 2], cv2.IMREAD_GRAYSCALE) if index >= 2 else b
+
+        # check if all images have the same shape, otherwise use old b
+        channels = [
+            b,
+            g if g.shape == b.shape else b,
+            r if r.shape == b.shape and g.shape == b.shape else b,
+        ]
+
+        img = np.stack(channels, axis=2)
+
+        # DEBUG
+        # if (b != g).any() and (b != r).any():
+        #     cv2.imwrite(f"{index}.png", img)
+
         assert img is not None, 'Image Not Found ' + path
         h0, w0 = img.shape[:2]  # orig hw
         r = self.img_size / max(h0, w0)  # resize image to img_size
