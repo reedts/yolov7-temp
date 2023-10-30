@@ -669,22 +669,30 @@ def load_image(self, index):
     if img is None:  # not cached
         path = self.img_files[index]
 
-        # Use channels as temporal association loading the greyscale from
-        # earlier images as G and R channel
-        # If no earlier images exist the missing channels are
-        # filled with copies of the original selected image
-        b = cv2.imread(path, cv2.IMREAD_GRAYSCALE)  # BGR
-        g = cv2.imread(self.img_files[index - 1], cv2.IMREAD_GRAYSCALE) if index >= 1 else b
-        r = cv2.imread(self.img_files[index - 2], cv2.IMREAD_GRAYSCALE) if index >= 2 else b
+        # # Use channels as temporal association loading the greyscale from
+        # # earlier images as G and R channel
+        # # If no earlier images exist the missing channels are
+        # # filled with copies of the original selected image
+        # b = cv2.imread(path, cv2.IMREAD_GRAYSCALE)  # BGR
+        # g = cv2.imread(self.img_files[index - 1], cv2.IMREAD_GRAYSCALE) if index >= 1 else b
+        # r = cv2.imread(self.img_files[index - 2], cv2.IMREAD_GRAYSCALE) if index >= 2 else b
 
-        # check if all images have the same shape, otherwise use old b
-        channels = [
-            b,
-            g if g.shape == b.shape else b,
-            r if r.shape == b.shape and g.shape == b.shape else b,
-        ]
+        # # check if all images have the same shape, otherwise use old b
+        # channels = [
+        #     b,
+        #     g if g.shape == b.shape else b,
+        #     r if r.shape == b.shape and g.shape == b.shape else b,
+        # ]
+        grey = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
 
-        img = np.stack(channels, axis=2)
+        # load activity mask
+        if index > 0:
+            prev_grey = cv2.imread(self.img_files[index - 1], cv2.IMREAD_GRAYSCALE)
+            mask = cv2.absdiff(grey, prev_grey)
+        else:
+            mask = np.zeros_like(grey)
+
+        img = np.stack((grey, mask), axis=2)
 
         # DEBUG
         # if (b != g).any() and (b != r).any():
