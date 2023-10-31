@@ -581,7 +581,8 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
             #img, labels = self.albumentations(img, labels)
 
             # Augment colorspace
-            augment_hsv(img, hgain=hyp['hsv_h'], sgain=hyp['hsv_s'], vgain=hyp['hsv_v'])
+            if hyp['hsv_h'] > 0. or hyp['hsv_s'] > 0. or hyp['hsv_v'] > 0.:
+                augment_hsv(img, hgain=hyp['hsv_h'], sgain=hyp['hsv_s'], vgain=hyp['hsv_v'])
 
             # Apply cutouts
             # if random.random() < 0.9:
@@ -688,7 +689,11 @@ def load_image(self, index):
         # load activity mask
         if index > 0:
             prev_grey = cv2.imread(self.img_files[index - 1], cv2.IMREAD_GRAYSCALE)
-            mask = cv2.absdiff(grey, prev_grey)
+
+            if prev_grey.shape == grey.shape:
+                mask = cv2.absdiff(grey, prev_grey)
+            else:
+                mask = np.zeros_like(grey)
         else:
             mask = np.zeros_like(grey)
 
