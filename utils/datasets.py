@@ -692,6 +692,7 @@ def load_image(self, index):
 
             if prev_grey.shape == grey.shape:
                 mask = cv2.absdiff(grey, prev_grey)
+                _, mask = cv2.threshold(mask, 30, 255, cv2.THRESH_BINARY)
             else:
                 mask = np.zeros_like(grey)
         else:
